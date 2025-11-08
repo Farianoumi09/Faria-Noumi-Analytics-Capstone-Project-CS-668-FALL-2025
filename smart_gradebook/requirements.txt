@@ -4,3 +4,6 @@ numpy
 scikit-learn
 shap
 joblib
+lime
+seaborn
+matplotlib
