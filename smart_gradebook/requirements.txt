@@ -1,9 +1,9 @@
-streamlit
 pandas
 numpy
 scikit-learn
-shap
+streamlit
+matplotlib
+seaborn
 joblib
 lime
-seaborn
-matplotlib
+shap 

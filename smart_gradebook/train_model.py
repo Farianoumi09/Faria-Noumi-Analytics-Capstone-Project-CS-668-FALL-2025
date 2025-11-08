@@ -1,76 +1,77 @@
+# train_model.py
 import pandas as pd
 import numpy as np
 import joblib
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report
-import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
 import matplotlib.pyplot as plt
+import seaborn as sns
 
-# -------------------------------
-# Load dataset
-# -------------------------------
+print("✅ Loading dataset...")
 data = pd.read_csv("student_data_clean.csv")
-print("✅ Dataset loaded successfully!")
 print("Shape:", data.shape)
-print("Columns:", data.columns.tolist())
+print("Columns:", list(data.columns))
 
-# -------------------------------
-# Define target
-# -------------------------------
-# If 'at_risk' exists, use it. Otherwise, create it from G3.
-if "at_risk" in data.columns:
-    target = "at_risk"
-else:
-    # Example rule: G3 < 10 → At Risk (1), else Low Risk (0)
-    target = "at_risk"
-    data[target] = np.where(data["G3"] < 10, 1, 0)
-    print(f"⚠️ 'at_risk' column not found, created synthetic target using G3 < 10.")
+# ---------------------------
+# Target and features
+# ---------------------------
+target = 'risk'  # Column indicating Low Risk / At Risk
+if target not in data.columns:
+    raise ValueError(f"❌ No target column '{target}' found in dataset!")
 
-# -------------------------------
-# Select features
-# -------------------------------
-features = ["G1", "G2", "studytime", "absences", "famsup"]
-X = data[features].copy()
-# Convert famsup to numeric if not already
-X["famsup"] = X["famsup"].map({"yes":1, "no":0, "Yes":1, "No":0}).fillna(0)
+# Encode target if it is categorical
+if data[target].dtype == 'object':
+    le = LabelEncoder()
+    data[target] = le.fit_transform(data[target])
+    print(f"Target '{target}' encoded.")
+
+# Select features (exclude target and G3)
+features = [col for col in data.columns if col not in ['G3', target]]
+
+# Convert categorical columns to numeric
+for col in data.select_dtypes(include=['object']).columns:
+    if col != target:
+        data[col] = data[col].map({"Yes":1, "No":0, "GP":1, "MS":0}).fillna(0)
+
+X = data[features]
 y = data[target]
 
-# -------------------------------
+# ---------------------------
 # Train/test split
-# -------------------------------
+# ---------------------------
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+print(f"Training samples: {len(X_train)}, Test samples: {len(X_test)}")
 
-# -------------------------------
-# Train model
-# -------------------------------
-clf = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42)
-clf.fit(X_train, y_train)
+# ---------------------------
+# Train Random Forest Classifier
+# ---------------------------
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+print("✅ Model trained successfully!")
 
-# -------------------------------
-# Evaluate model
-# -------------------------------
-y_pred = clf.predict(X_test)
-print("\n✅ Model Training Complete!")
-print("Accuracy:", round(accuracy_score(y_test, y_pred), 2))
-print("\nClassification Report:\n", classification_report(y_test, y_pred))
+# ---------------------------
+# Save trained model
+# ---------------------------
+joblib.dump(model, "student_risk_model.pkl")
+print("💾 Model saved as 'student_risk_model.pkl'")
 
-# -------------------------------
-# Optional: Feature importance plot
-# -------------------------------
-importance = clf.feature_importances_
-importance_df = pd.DataFrame({"Feature": features, "Importance": importance}).sort_values(by="Importance", ascending=True)
+# ---------------------------
+# Feature importance plot
+# ---------------------------
+importance_df = pd.DataFrame({
+    'Feature': features,
+    'Importance': model.feature_importances_
+}).sort_values(by='Importance', ascending=True)
 
-plt.figure(figsize=(6,4))
-sns.barplot(data=importance_df, x="Importance", y="Feature", palette="viridis")
+plt.figure(figsize=(10,8))
+sns.barplot(data=importance_df, x='Importance', y='Feature', palette='viridis')
 plt.title("Feature Importance")
 plt.tight_layout()
 plt.savefig("feature_importance.png")
-print("📊 Feature importance plot saved as feature_importance.png")
+print("📊 Feature importance plot saved as 'feature_importance.png'")
 
-# -------------------------------
-# Save model
-# -------------------------------
-joblib.dump(clf, "student_risk_model.pkl")
-print("💾 Model saved successfully as 'student_risk_model.pkl'")
-print("🎉 Training complete! You can now run Streamlit using:\n   streamlit run app.py")
+# Optional: show top features
+print("Top features by importance:")
+print(importance_df.sort_values(by='Importance', ascending=False).head(10))
+
