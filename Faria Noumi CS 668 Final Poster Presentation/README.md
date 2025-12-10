@@ -1,4 +1,4 @@
-# Final Poster Presentation – CS 668 Analytics Capstone
+# Final Poster Presentation – CS 668 Analytics Capstone Project
 
 This folder contains my final poster presentation video for CS 668.
 
