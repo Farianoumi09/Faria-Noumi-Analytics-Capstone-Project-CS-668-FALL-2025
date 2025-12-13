@@ -1,6 +1,12 @@
 # Final Poster Presentation – CS 668 Analytics Capstone Project
 
-This folder contains my final poster presentation video for CS 668.
+This folder contains my final poster and poster presentation video for CS 668.
+
+## 🌐 Online Poster (Google Slides)
+
+View the poster online:
+
+🔗 https://docs.google.com/presentation/d/1yt9SbqHW6yzLdaga16UkH_7kcOjYzNzy/edit
 
 ## 🎥 Watch the Presentation
 
